@@ -16,10 +16,10 @@
 //------------------------------------------------------------------------------
 #import "zxing-all-in-one.h"
 
-#ifdef PHONEGAP_FRAMEWORK
-#import <PhoneGap/PGPlugin.h>
+#ifdef CORDOVA_FRAMEWORK
+#import <CORDOVA/CDVPlugin.h>
 #else
-#import "PGPlugin.h"
+#import "CDVPlugin.h"
 #endif
 
 //------------------------------------------------------------------------------
@@ -29,13 +29,13 @@
 #define USE_SHUTTER 0
 
 //------------------------------------------------------------------------------
-@class PGbcsProcessor;
-@class PGbcsViewController;
+@class CDVbcsProcessor;
+@class CDVbcsViewController;
 
 //------------------------------------------------------------------------------
 // plugin class
 //------------------------------------------------------------------------------
-@interface PGBarcodeScanner : PGPlugin {}
+@interface CDVBarcodeScanner : CDVPlugin {}
     - (NSString*)isScanNotPossible;
     - (void)scan:(NSMutableArray*)arguments withDict:(NSMutableDictionary*)options;
     - (void)encode:(NSMutableArray*)arguments withDict:(NSMutableDictionary*)options;
@@ -46,11 +46,11 @@
 //------------------------------------------------------------------------------
 // class that does the grunt work
 //------------------------------------------------------------------------------
-@interface PGbcsProcessor : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate> {}
-    @property (nonatomic, retain) PGBarcodeScanner*           plugin;
+@interface CDVbcsProcessor : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate> {}
+    @property (nonatomic, retain) CDVBarcodeScanner*           plugin;
     @property (nonatomic, retain) NSString*                   callback;
     @property (nonatomic, retain) UIViewController*           parentViewController;
-    @property (nonatomic, retain) PGbcsViewController*        viewController;
+    @property (nonatomic, retain) CDVbcsViewController*        viewController;
     @property (nonatomic, retain) AVCaptureSession*           captureSession;
     @property (nonatomic, retain) AVCaptureVideoPreviewLayer* previewLayer;
     @property (nonatomic, retain) NSString*                   alternateXib;
@@ -58,7 +58,7 @@
     @property (nonatomic)         BOOL                        is2D;
     @property (nonatomic)         BOOL                        capturing;
 
-    - (id)initWithPlugin:(PGBarcodeScanner*)plugin callback:(NSString*)callback parentViewController:(UIViewController*)parentViewController alterateOverlayXib:(NSString *)alternateXib;
+    - (id)initWithPlugin:(CDVBarcodeScanner*)plugin callback:(NSString*)callback parentViewController:(UIViewController*)parentViewController alterateOverlayXib:(NSString *)alternateXib;
     - (void)scanBarcode;
     - (void)barcodeScanSucceeded:(NSString*)text format:(NSString*)format;
     - (void)barcodeScanFailed:(NSString*)message;
@@ -76,13 +76,13 @@
 //------------------------------------------------------------------------------
 // view controller for the ui
 //------------------------------------------------------------------------------
-@interface PGbcsViewController : UIViewController {}
-    @property (nonatomic, retain) PGbcsProcessor*  processor;
+@interface CDVbcsViewController : UIViewController {}
+    @property (nonatomic, retain) CDVbcsProcessor*  processor;
     @property (nonatomic, retain) NSString*        alternateXib;
     @property (nonatomic)         BOOL             shutterPressed;
     @property (nonatomic, retain) IBOutlet UIView* overlayView;
 
-    - (id)initWithProcessor:(PGbcsProcessor*)processor alternateOverlay:(NSString *)alternateXib;
+    - (id)initWithProcessor:(CDVbcsProcessor*)processor alternateOverlay:(NSString *)alternateXib;
     - (void)startCapturing;
     - (UIView*)buildOverlayView;
     - (UIImage*)buildReticleImage;
@@ -94,7 +94,7 @@
 //------------------------------------------------------------------------------
 // plugin class
 //------------------------------------------------------------------------------
-@implementation PGBarcodeScanner
+@implementation CDVBarcodeScanner
 
     //--------------------------------------------------------------------------
     - (NSString*)isScanNotPossible {
@@ -110,7 +110,7 @@
 
     //--------------------------------------------------------------------------
     - (void)scan:(NSMutableArray*)arguments withDict:(NSMutableDictionary*)options {
-        PGbcsProcessor* processor;
+        CDVbcsProcessor* processor;
         NSString*       callback;
         NSString*       capabilityError;
 
@@ -129,10 +129,10 @@
             return;
         }
       
-        processor = [[PGbcsProcessor alloc]
+        processor = [[CDVbcsProcessor alloc]
             initWithPlugin:self
             callback:callback
-            parentViewController:[self appViewController]
+            parentViewController:self.viewController
             alterateOverlayXib:overlayXib
         ];
 
@@ -154,8 +154,8 @@
         [resultDict setObject:format          forKey:@"format"];
         [resultDict setObject:cancelledNumber forKey:@"cancelled"];
 
-        PluginResult* result = [PluginResult
-            resultWithStatus: PGCommandStatus_OK
+        CDVPluginResult* result = [CDVPluginResult
+            resultWithStatus: CDVCommandStatus_OK
             messageAsDictionary: resultDict
         ];
 
@@ -166,8 +166,8 @@
 
     //--------------------------------------------------------------------------
     - (void)returnError:(NSString*)message callback:(NSString*)callback {
-        PluginResult* result = [PluginResult
-            resultWithStatus: PGCommandStatus_OK
+        CDVPluginResult* result = [CDVPluginResult
+            resultWithStatus: CDVCommandStatus_OK
             messageAsString: message
         ];
 
@@ -181,7 +181,7 @@
 //------------------------------------------------------------------------------
 // class that does the grunt work
 //------------------------------------------------------------------------------
-@implementation PGbcsProcessor
+@implementation CDVbcsProcessor
 
     @synthesize plugin               = _plugin;
     @synthesize callback             = _callback;
@@ -195,7 +195,7 @@
     @synthesize capturing            = _capturing;
 
     //--------------------------------------------------------------------------
-    - (id)initWithPlugin:(PGBarcodeScanner*)plugin
+    - (id)initWithPlugin:(CDVBarcodeScanner*)plugin
           callback:(NSString*)callback
           parentViewController:(UIViewController*)parentViewController
           alterateOverlayXib:(NSString *)alternateXib {
@@ -237,7 +237,7 @@
             return;
         }
 
-        self.viewController = [[[PGbcsViewController alloc] initWithProcessor: self alternateOverlay:self.alternateXib] autorelease];
+        self.viewController = [[[CDVbcsViewController alloc] initWithProcessor: self alternateOverlay:self.alternateXib] autorelease];
 
         // delayed [self openDialog];
         [self performSelector:@selector(openDialog) withObject:nil afterDelay:1];
@@ -587,14 +587,14 @@
 //------------------------------------------------------------------------------
 // view controller for the ui
 //------------------------------------------------------------------------------
-@implementation PGbcsViewController
+@implementation CDVbcsViewController
     @synthesize processor      = _processor;
     @synthesize shutterPressed = _shutterPressed;
     @synthesize alternateXib   = _alternateXib;
     @synthesize overlayView    = _overlayView;
 
     //--------------------------------------------------------------------------
-    - (id)initWithProcessor:(PGbcsProcessor*)processor alternateOverlay:(NSString *)alternateXib {
+    - (id)initWithProcessor:(CDVbcsProcessor*)processor alternateOverlay:(NSString *)alternateXib {
         self = [super init];
         if (!self) return self;
 
